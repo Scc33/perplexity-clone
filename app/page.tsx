@@ -251,6 +251,7 @@ export default function Home() {
         onDeleteConversation={handleDeleteConversation}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        isNewConversation={currentConversationId === null}
       />
 
       {/* Main Chat Area */}

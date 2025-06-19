@@ -11,6 +11,7 @@ interface SideBarProps {
   onDeleteConversation: (conversationId: string) => void;
   isOpen: boolean;
   onClose: () => void;
+  isNewConversation: boolean;
 }
 
 export default function SideBar({
@@ -20,6 +21,7 @@ export default function SideBar({
   onDeleteConversation,
   isOpen,
   onClose,
+  isNewConversation,
 }: SideBarProps) {
   return (
     <>
@@ -38,7 +40,7 @@ export default function SideBar({
         } lg:translate-x-0`}
       >
         <SidebarHeader />
-        <NewChatButton onNewChat={onNewChat} />
+        {!isNewConversation && <NewChatButton onNewChat={onNewChat} />}
         <SidebarConversationsList
           conversations={conversations}
           onConversationSelect={onConversationSelect}
