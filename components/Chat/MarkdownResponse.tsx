@@ -3,7 +3,7 @@ import { ChatMessageProps } from "./ChatMessage";
 
 export default function MarkdownResponse({ message }: ChatMessageProps) {
   return (
-    <div className="prose prose-invert max-w-none">
+    <div className="prose prose-invert max-w-none [&>*:last-child]:mb-0">
       <ReactMarkdown
         components={{
           // Custom styling for different markdown elements
