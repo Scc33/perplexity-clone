@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserProfile } from "../types";
-import { loadUserProfile } from "../utils/UserProfileLocalStorage";
+import { UserProfile } from "../../types";
+import { loadUserProfile } from "../../utils/UserProfileLocalStorage";
 import Link from "next/link";
 
 export default function SidebarFooter() {

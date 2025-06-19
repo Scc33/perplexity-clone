@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Conversation, Message } from "../types";
-import SideBar from "../components/SideBar";
-import ChatHistory from "../components/ChatHistory";
-import ChatInput from "../components/ChatInput";
-import ChatHeader from "../components/ChatHeader";
+import SideBar from "../components/Sidebar/SideBar";
+import ChatHistory from "../components/Chat/ChatHistory";
+import ChatInput from "../components/Chat/ChatInput";
+import ChatHeader from "../components/Chat/ChatHeader";
 import {
   loadConversations,
   saveConversations,

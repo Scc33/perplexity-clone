@@ -1,6 +1,6 @@
 import WelcomeMessage from "./WelcomeMessage";
+import { Message } from "../../types";
 import ChatMessage from "./ChatMessage";
-import { Message } from "../types";
 
 interface ChatHistoryProps {
   onSuggestionClick: (suggestion: string) => void;
