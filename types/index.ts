@@ -23,6 +23,16 @@ export interface SearchAnalysis {
   reasoning: string;
 }
 
+export interface SearchResult {
+  title: string;
+  snippet: string;
+  link: string;
+}
+
+export interface SearchResponse {
+  organic_results?: SearchResult[];
+}
+
 export interface EnhancedMessage extends Message {
   searchAnalysis?: SearchAnalysis;
 }
