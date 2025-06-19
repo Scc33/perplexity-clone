@@ -2,6 +2,8 @@
 
 A modern chat interface built with Next.js and Google Gemini AI, inspired by Perplexity's design with intelligent web search integration.
 
+### **Demo Video - https://youtu.be/Gw9aqs-LRg0**
+
 ## Future Improvements
 
 The following features are planned for future development:
