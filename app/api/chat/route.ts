@@ -2,6 +2,11 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { NextRequest, NextResponse } from "next/server";
 import { getJson } from "serpapi";
 import { Message, SearchAnalysis } from "../../../types";
+import {
+  SEARCH_ANALYSIS_PROMPT,
+  SEARCH_ENHANCED_PROMPT,
+  SEARCH_RECOMMENDATION_PROMPT,
+} from "../../../prompts/Prompts";
 
 // Initialize the Google Generative AI client
 const genAI = createGoogleGenerativeAI({
@@ -29,25 +34,10 @@ async function analyzeSearchNeeds(
 ): Promise<SearchAnalysis> {
   const model = genAI("gemini-2.0-flash");
 
-  const analysisPrompt = `Analyze the following user message and determine if a Google search would be helpful to provide a better response.
-
-User message: "${userMessage}"
-
-Consider the following factors:
-1. Does the message ask for current events, recent information, or time-sensitive data?
-2. Does it request specific facts, statistics, or data that might be outdated?
-3. Does it ask about products, services, or information that changes frequently?
-4. Does it request information about specific people, places, or events that might need verification?
-5. Does it ask for recommendations or reviews that would benefit from current information?
-
-Respond in the following JSON format:
-{
-  "needsSearch": true/false,
-  "searchQuery": "specific search terms if search is needed, otherwise null",
-  "reasoning": "brief explanation of why search is or isn't needed"
-}
-
-Only respond with valid JSON.`;
+  const analysisPrompt = SEARCH_ANALYSIS_PROMPT.replace(
+    "{userMessage}",
+    userMessage
+  );
 
   try {
     const result = await model.doGenerate({
@@ -137,20 +127,17 @@ export async function POST(request: NextRequest) {
             )
             .join("\n\n") || "No search results found.";
 
-        enhancedPrompt = `I have performed a Google search for: "${searchQuery}"
-
-Search Results:
-${searchSnippets}
-
-Based on these search results, please provide a comprehensive answer to the user's request: ${lastMessage.content}
-
-Please cite the sources when appropriate and provide the most current information available.`;
+        enhancedPrompt = SEARCH_ENHANCED_PROMPT.replace(
+          "{searchQuery}",
+          searchQuery
+        )
+          .replace("{searchResults}", searchSnippets)
+          .replace("{userRequest}", lastMessage.content);
       } else {
-        enhancedPrompt = `The user's request may benefit from current information. Please note that a search could provide more up-to-date information for: "${searchQuery}"
-
-User's request: ${lastMessage.content}
-
-Please provide a helpful response, but note that for the most current information, a web search would be recommended.`;
+        enhancedPrompt = SEARCH_RECOMMENDATION_PROMPT.replace(
+          "{searchQuery}",
+          searchQuery
+        ).replace("{userRequest}", lastMessage.content);
       }
     }
 
