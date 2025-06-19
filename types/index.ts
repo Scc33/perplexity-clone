@@ -16,3 +16,13 @@ export interface UserProfile {
   name: string;
   email: string;
 }
+
+export interface SearchAnalysis {
+  needsSearch: boolean;
+  searchQuery: string;
+  reasoning: string;
+}
+
+export interface EnhancedMessage extends Message {
+  searchAnalysis?: SearchAnalysis;
+}
