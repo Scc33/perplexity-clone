@@ -1,18 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Conversation, Message } from "../types";
 import SideBar from "../components/SideBar";
 import ChatHistory from "../components/ChatHistory";
 import ChatInput from "../components/ChatInput";
 import ChatHeader from "../components/ChatHeader";
+import {
+  loadConversations,
+  saveConversations,
+  loadMessages,
+  saveMessages,
+  saveConversation,
+  saveConversationMessages,
+  deleteConversation,
+  updateConversationTimestamp,
+  updateConversationTitle,
+} from "../utils/LocalStorage";
 
 export default function Home() {
-  const [conversations, setConversations] = useState<Conversation[]>([
-    { id: "1", title: "How to build a React app", timestamp: "2 hours ago" },
-    { id: "2", title: "Best practices for TypeScript", timestamp: "1 day ago" },
-    { id: "3", title: "CSS Grid vs Flexbox", timestamp: "3 days ago" },
-  ]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<{
     [conversationId: string]: Message[];
   }>({});
@@ -22,6 +29,29 @@ export default function Home() {
   const [currentMessage, setCurrentMessage] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const savedConversations = loadConversations();
+    const savedMessages = loadMessages();
+
+    setConversations(savedConversations);
+    setMessages(savedMessages);
+  }, []);
+
+  // Save conversations whenever they change
+  useEffect(() => {
+    if (conversations.length > 0) {
+      saveConversations(conversations);
+    }
+  }, [conversations]);
+
+  // Save messages whenever they change
+  useEffect(() => {
+    if (Object.keys(messages).length > 0) {
+      saveMessages(messages);
+    }
+  }, [messages]);
 
   const getCurrentMessages = () => {
     return currentConversationId ? messages[currentConversationId] || [] : [];
@@ -58,6 +88,15 @@ export default function Home() {
         };
         setConversations([newConversation, ...conversations]);
         setCurrentConversationId(conversationId);
+
+        // Save the new conversation to localStorage
+        saveConversation(newConversation);
+      } else {
+        // Update conversation title if this is the first message
+        const conversationMessages = messages[conversationId] || [];
+        if (conversationMessages.length === 0) {
+          updateConversationTitle(conversationId, currentMessage);
+        }
       }
 
       // Add message to conversation
@@ -67,6 +106,9 @@ export default function Home() {
         ...messages,
         [conversationId]: updatedMessages,
       });
+
+      // Save messages to localStorage
+      saveConversationMessages(conversationId, updatedMessages);
 
       setCurrentMessage("");
 
@@ -83,10 +125,14 @@ export default function Home() {
         isLoading: true,
       };
 
+      const messagesWithLoading = [...updatedMessages, loadingMessage];
       setMessages((prev) => ({
         ...prev,
-        [conversationId]: [...(prev[conversationId] || []), loadingMessage],
+        [conversationId]: messagesWithLoading,
       }));
+
+      // Save loading state to localStorage
+      saveConversationMessages(conversationId, messagesWithLoading);
 
       try {
         // Make API call to Gemini
@@ -117,15 +163,14 @@ export default function Home() {
           }),
         };
 
+        const finalMessages = [...updatedMessages, assistantMessage];
         setMessages((prev) => ({
           ...prev,
-          [conversationId]: [
-            ...(prev[conversationId] || []).filter(
-              (msg) => msg.id !== loadingMessageId
-            ),
-            assistantMessage,
-          ],
+          [conversationId]: finalMessages,
         }));
+
+        // Save final messages to localStorage
+        saveConversationMessages(conversationId, finalMessages);
       } catch (error) {
         console.error("Error calling AI API:", error);
 
@@ -141,15 +186,14 @@ export default function Home() {
           }),
         };
 
+        const errorMessages = [...updatedMessages, errorMessage];
         setMessages((prev) => ({
           ...prev,
-          [conversationId]: [
-            ...(prev[conversationId] || []).filter(
-              (msg) => msg.id !== loadingMessageId
-            ),
-            errorMessage,
-          ],
+          [conversationId]: errorMessages,
         }));
+
+        // Save error messages to localStorage
+        saveConversationMessages(conversationId, errorMessages);
       } finally {
         setIsLoading(false);
       }
@@ -165,6 +209,9 @@ export default function Home() {
   const handleConversationSelect = (conversationId: string) => {
     setCurrentConversationId(conversationId);
     setCurrentMessage("");
+
+    // Update timestamp when conversation is accessed
+    updateConversationTimestamp(conversationId);
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -175,6 +222,25 @@ export default function Home() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  // Add function to handle conversation deletion
+  const handleDeleteConversation = (conversationId: string) => {
+    // Remove from state
+    setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+    setMessages((prev) => {
+      const newMessages = { ...prev };
+      delete newMessages[conversationId];
+      return newMessages;
+    });
+
+    // If we're deleting the current conversation, clear it
+    if (currentConversationId === conversationId) {
+      setCurrentConversationId(null);
+    }
+
+    // Remove from localStorage
+    deleteConversation(conversationId);
+  };
+
   return (
     <div className="flex h-screen bg-gray-900 text-white">
       {/* Sidebar */}
@@ -182,6 +248,7 @@ export default function Home() {
         conversations={conversations}
         onNewChat={handleNewChat}
         onConversationSelect={handleConversationSelect}
+        onDeleteConversation={handleDeleteConversation}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
