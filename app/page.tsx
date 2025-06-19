@@ -1,103 +1,143 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { Conversation, Message } from "../types";
+import SideBar from "../components/SideBar";
+import ChatHistory from "../components/ChatHistory";
+import ChatInput from "../components/ChatInput";
+import ChatHeader from "../components/ChatHeader";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [conversations, setConversations] = useState<Conversation[]>([
+    { id: "1", title: "How to build a React app", timestamp: "2 hours ago" },
+    { id: "2", title: "Best practices for TypeScript", timestamp: "1 day ago" },
+    { id: "3", title: "CSS Grid vs Flexbox", timestamp: "3 days ago" },
+  ]);
+  const [messages, setMessages] = useState<{
+    [conversationId: string]: Message[];
+  }>({});
+  const [currentConversationId, setCurrentConversationId] = useState<
+    string | null
+  >(null);
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  const getCurrentMessages = () => {
+    return currentConversationId ? messages[currentConversationId] || [] : [];
+  };
+
+  const handleSendMessage = () => {
+    if (currentMessage.trim()) {
+      const messageId = Date.now().toString();
+      const timestamp = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      // Create user message
+      const userMessage: Message = {
+        id: messageId,
+        content: currentMessage,
+        role: "user",
+        timestamp,
+      };
+
+      // Create or update conversation
+      const conversationId = currentConversationId || messageId;
+      const conversationTitle =
+        currentMessage.slice(0, 50) + (currentMessage.length > 50 ? "..." : "");
+
+      if (!currentConversationId) {
+        // Create new conversation
+        const newConversation: Conversation = {
+          id: conversationId,
+          title: conversationTitle,
+          timestamp: "Just now",
+        };
+        setConversations([newConversation, ...conversations]);
+        setCurrentConversationId(conversationId);
+      }
+
+      // Add message to conversation
+      const conversationMessages = messages[conversationId] || [];
+      setMessages({
+        ...messages,
+        [conversationId]: [...conversationMessages, userMessage],
+      });
+
+      setCurrentMessage("");
+
+      // Simulate assistant response (you can replace this with actual API call)
+      setTimeout(() => {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: `I received your message: "${currentMessage}". This is a simulated response. In a real application, this would be an AI-generated response based on your query.`,
+          role: "assistant",
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+
+        setMessages((prev) => ({
+          ...prev,
+          [conversationId]: [...(prev[conversationId] || []), assistantMessage],
+        }));
+      }, 1000);
+    }
+  };
+
+  const handleNewChat = () => {
+    setCurrentConversationId(null);
+    setCurrentMessage("");
+    setIsSidebarOpen(false);
+  };
+
+  const handleConversationSelect = (conversationId: string) => {
+    setCurrentConversationId(conversationId);
+    setCurrentMessage("");
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setCurrentMessage(suggestion);
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-900 text-white">
+      {/* Sidebar */}
+      <SideBar
+        conversations={conversations}
+        onNewChat={handleNewChat}
+        onConversationSelect={handleConversationSelect}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Chat Header */}
+        <ChatHeader
+          messages={getCurrentMessages()}
+          onMenuClick={toggleSidebar}
+        />
+
+        {/* Chat Messages Area */}
+        <ChatHistory
+          onSuggestionClick={handleSuggestionClick}
+          messages={getCurrentMessages()}
+        />
+
+        {/* Chat Input */}
+        <ChatInput
+          currentMessage={currentMessage}
+          onMessageChange={setCurrentMessage}
+          onSendMessage={handleSendMessage}
+        />
+      </div>
     </div>
   );
 }
