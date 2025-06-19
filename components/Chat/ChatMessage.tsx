@@ -1,6 +1,7 @@
 import { Message } from "../../types";
+import MarkdownResponse from "./MarkdownResponse";
 
-interface ChatMessageProps {
+export interface ChatMessageProps {
   message: Message;
 }
 
@@ -41,7 +42,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
                   <span>Thinking...</span>
                 </div>
               ) : (
-                <div className="whitespace-pre-wrap">{message.content}</div>
+                <MarkdownResponse message={message} />
               )}
             </div>
             <div
