@@ -9,4 +9,5 @@ export interface Message {
   content: string;
   role: "user" | "assistant";
   timestamp: string;
+  isLoading?: boolean;
 }

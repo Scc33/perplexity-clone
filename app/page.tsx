@@ -21,13 +21,15 @@ export default function Home() {
   >(null);
   const [currentMessage, setCurrentMessage] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getCurrentMessages = () => {
     return currentConversationId ? messages[currentConversationId] || [] : [];
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (currentMessage.trim()) {
+      setIsLoading(true);
       const messageId = Date.now().toString();
       const timestamp = new Date().toLocaleTimeString([], {
         hour: "2-digit",
@@ -60,18 +62,54 @@ export default function Home() {
 
       // Add message to conversation
       const conversationMessages = messages[conversationId] || [];
+      const updatedMessages = [...conversationMessages, userMessage];
       setMessages({
         ...messages,
-        [conversationId]: [...conversationMessages, userMessage],
+        [conversationId]: updatedMessages,
       });
 
       setCurrentMessage("");
 
-      // Simulate assistant response (you can replace this with actual API call)
-      setTimeout(() => {
+      // Add loading message
+      const loadingMessageId = (Date.now() + 1).toString();
+      const loadingMessage: Message = {
+        id: loadingMessageId,
+        content: "",
+        role: "assistant",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        isLoading: true,
+      };
+
+      setMessages((prev) => ({
+        ...prev,
+        [conversationId]: [...(prev[conversationId] || []), loadingMessage],
+      }));
+
+      try {
+        // Make API call to Gemini
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messages: updatedMessages,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to get response from AI");
+        }
+
+        const data = await response.json();
+
+        // Replace loading message with actual response
         const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: `I received your message: "${currentMessage}". This is a simulated response. In a real application, this would be an AI-generated response based on your query.`,
+          id: loadingMessageId,
+          content: data.content,
           role: "assistant",
           timestamp: new Date().toLocaleTimeString([], {
             hour: "2-digit",
@@ -81,9 +119,40 @@ export default function Home() {
 
         setMessages((prev) => ({
           ...prev,
-          [conversationId]: [...(prev[conversationId] || []), assistantMessage],
+          [conversationId]: [
+            ...(prev[conversationId] || []).filter(
+              (msg) => msg.id !== loadingMessageId
+            ),
+            assistantMessage,
+          ],
         }));
-      }, 1000);
+      } catch (error) {
+        console.error("Error calling AI API:", error);
+
+        // Replace loading message with error message
+        const errorMessage: Message = {
+          id: loadingMessageId,
+          content:
+            "Sorry, I encountered an error while processing your request. Please try again.",
+          role: "assistant",
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+
+        setMessages((prev) => ({
+          ...prev,
+          [conversationId]: [
+            ...(prev[conversationId] || []).filter(
+              (msg) => msg.id !== loadingMessageId
+            ),
+            errorMessage,
+          ],
+        }));
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -136,6 +205,7 @@ export default function Home() {
           currentMessage={currentMessage}
           onMessageChange={setCurrentMessage}
           onSendMessage={handleSendMessage}
+          isLoading={isLoading}
         />
       </div>
     </div>
