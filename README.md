@@ -110,26 +110,36 @@ perplexity-clone/
 ├── types/
 │   └── index.ts             # TypeScript type definitions
 └── utils/
-    └── LocalStorage.ts      # Local storage utilities for data persistence
+    ├── ConversationLocalStorage.ts  # Conversation and message storage
+    ├── UserProfileLocalStorage.ts   # User profile storage
+    └── LocalStorageUtils.ts         # Generic localStorage utilities
 ```
 
 ## Local Storage API
 
-The application includes a comprehensive set of utilities for managing persistent data:
+The application includes a modular set of utilities for managing persistent data:
 
-### Core Functions
+### Conversation Storage (`ConversationLocalStorage.ts`)
 - `saveConversations()` / `loadConversations()` - Manage conversation list
 - `saveMessages()` / `loadMessages()` - Manage messages for all conversations
 - `saveConversation()` - Save individual conversations
 - `saveConversationMessages()` - Save messages for specific conversations
 - `deleteConversation()` - Remove conversations and their messages
-
-### Utility Functions
 - `updateConversationTimestamp()` - Update conversation timestamps
 - `updateConversationTitle()` - Update conversation titles based on content
-- `clearAllData()` - Clear all stored data
-- `getStorageInfo()` - Get storage usage statistics
-- `testLocalStorage()` - Test localStorage functionality
+- `clearConversationData()` - Clear all conversation data
+- `getConversationStorageInfo()` - Get conversation storage usage statistics
+- `testConversationLocalStorage()` - Test conversation localStorage functionality
+
+### User Profile Storage (`UserProfileLocalStorage.ts`)
+- `saveUserProfile()` / `loadUserProfile()` - Manage user profile data
+
+### Generic Utilities (`LocalStorageUtils.ts`)
+- `isLocalStorageAvailable()` - Check if localStorage is available
+- `saveToLocalStorage()` / `loadFromLocalStorage()` - Generic storage functions
+- `removeFromLocalStorage()` - Remove data from localStorage
+- `getTimeAgo()` - Get relative time ago string
+- `testLocalStorage()` - Test basic localStorage functionality
 
 ## Learn More
 

@@ -11,3 +11,8 @@ export interface Message {
   timestamp: string;
   isLoading?: boolean;
 }
+
+export interface UserProfile {
+  name: string;
+  email: string;
+}

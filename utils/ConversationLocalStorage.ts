@@ -1,79 +1,36 @@
 import { Conversation, Message } from "../types";
+import {
+  saveToLocalStorage,
+  loadFromLocalStorage,
+  removeFromLocalStorage,
+  getTimeAgo,
+} from "./LocalStorageUtils";
 
 // Storage keys
 const CONVERSATIONS_KEY = "perplexity_clone_conversations";
 const MESSAGES_KEY = "perplexity_clone_messages";
 
-// Helper to check if localStorage is available
-const isLocalStorageAvailable = (): boolean => {
-  try {
-    const test = "__localStorage_test__";
-    localStorage.setItem(test, test);
-    localStorage.removeItem(test);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 // Conversations storage
 export const saveConversations = (conversations: Conversation[]): void => {
-  if (!isLocalStorageAvailable()) {
-    console.warn("LocalStorage is not available");
-    return;
-  }
-
-  try {
-    localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
-  } catch (error) {
-    console.error("Failed to save conversations to localStorage:", error);
-  }
+  saveToLocalStorage(CONVERSATIONS_KEY, conversations);
 };
 
 export const loadConversations = (): Conversation[] => {
-  if (!isLocalStorageAvailable()) {
-    console.warn("LocalStorage is not available");
-    return [];
-  }
-
-  try {
-    const stored = localStorage.getItem(CONVERSATIONS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    console.error("Failed to load conversations from localStorage:", error);
-    return [];
-  }
+  return loadFromLocalStorage<Conversation[]>(CONVERSATIONS_KEY, []);
 };
 
 // Messages storage
 export const saveMessages = (messages: {
   [conversationId: string]: Message[];
 }): void => {
-  if (!isLocalStorageAvailable()) {
-    console.warn("LocalStorage is not available");
-    return;
-  }
-
-  try {
-    localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
-  } catch (error) {
-    console.error("Failed to save messages to localStorage:", error);
-  }
+  saveToLocalStorage(MESSAGES_KEY, messages);
 };
 
 export const loadMessages = (): { [conversationId: string]: Message[] } => {
-  if (!isLocalStorageAvailable()) {
-    console.warn("LocalStorage is not available");
-    return {};
-  }
-
-  try {
-    const stored = localStorage.getItem(MESSAGES_KEY);
-    return stored ? JSON.parse(stored) : {};
-  } catch (error) {
-    console.error("Failed to load messages from localStorage:", error);
-    return {};
-  }
+  return loadFromLocalStorage<{ [conversationId: string]: Message[] }>(
+    MESSAGES_KEY,
+    {}
+  );
 };
 
 // Helper to save a single conversation
@@ -117,30 +74,18 @@ export const deleteConversation = (conversationId: string): void => {
   saveMessages(allMessages);
 };
 
-// Helper to clear all data
-export const clearAllData = (): void => {
-  if (!isLocalStorageAvailable()) {
-    return;
-  }
-
-  try {
-    localStorage.removeItem(CONVERSATIONS_KEY);
-    localStorage.removeItem(MESSAGES_KEY);
-  } catch (error) {
-    console.error("Failed to clear localStorage data:", error);
-  }
+// Helper to clear all conversation data
+export const clearConversationData = (): void => {
+  removeFromLocalStorage(CONVERSATIONS_KEY);
+  removeFromLocalStorage(MESSAGES_KEY);
 };
 
 // Helper to get storage usage info
-export const getStorageInfo = (): {
+export const getConversationStorageInfo = (): {
   conversations: number;
   messages: number;
   totalSize: number;
 } => {
-  if (!isLocalStorageAvailable()) {
-    return { conversations: 0, messages: 0, totalSize: 0 };
-  }
-
   try {
     const conversations = loadConversations();
     const messages = loadMessages();
@@ -155,7 +100,7 @@ export const getStorageInfo = (): {
       totalSize,
     };
   } catch (error) {
-    console.error("Failed to get storage info:", error);
+    console.error("Failed to get conversation storage info:", error);
     return { conversations: 0, messages: 0, totalSize: 0 };
   }
 };
@@ -207,27 +152,8 @@ export const updateConversationTitle = (
   }
 };
 
-// Helper function to get relative time ago
-const getTimeAgo = (date: Date): string => {
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) {
-    return "Just now";
-  } else if (diffInSeconds < 3600) {
-    const minutes = Math.floor(diffInSeconds / 60);
-    return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
-  } else if (diffInSeconds < 86400) {
-    const hours = Math.floor(diffInSeconds / 3600);
-    return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-  } else {
-    const days = Math.floor(diffInSeconds / 86400);
-    return `${days} day${days > 1 ? "s" : ""} ago`;
-  }
-};
-
-// Test function to verify localStorage functionality
-export const testLocalStorage = (): boolean => {
+// Test function to verify conversation localStorage functionality
+export const testConversationLocalStorage = (): boolean => {
   try {
     // Test saving and loading conversations
     const testConversation: Conversation = {
@@ -264,7 +190,7 @@ export const testLocalStorage = (): boolean => {
 
     return conversationExists && messagesExist;
   } catch (error) {
-    console.error("LocalStorage test failed:", error);
+    console.error("Conversation localStorage test failed:", error);
     return false;
   }
 };

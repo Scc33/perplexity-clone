@@ -16,7 +16,7 @@ import {
   deleteConversation,
   updateConversationTimestamp,
   updateConversationTitle,
-} from "../utils/LocalStorage";
+} from "../utils/ConversationLocalStorage";
 
 export default function Home() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
